@@ -5,7 +5,7 @@ import re
 import subprocess as sp
 import sys
 try:
-    import xmlrpclib
+    import xmlrpc.client
 except ImportError:
     import xmlrpc.client as xmlrpclib
 
@@ -85,14 +85,14 @@ def get_releases(package_str, pre=False, key=None, include_hidden=False,
     package_data = json.loads(response.text)
 
     if not include_hidden:
-        client = xmlrpclib.ServerProxy(hidden_url)
+        client = xmlrpc.client.ServerProxy(hidden_url)
         public_releases = set(client.package_releases(package_request['name']))
 
     if key is None:
-        key = lambda (k, v): pkg_resources.parse_version(k)
+        key = lambda k_v: pkg_resources.parse_version(k_v[0])
 
     all_releases = OrderedDict(sorted([(k, v[0]) for k, v in
-                                       package_data['releases'].iteritems()
+                                       package_data['releases'].items()
                                        if v and (include_hidden or k in
                                                  public_releases)], key=key))
 
@@ -116,12 +116,12 @@ def get_releases(package_str, pre=False, key=None, include_hidden=False,
 
     # Define regex to check for pre-release.
     cre_pre = re.compile(r'\.dev|\.pre')
-    releases = OrderedDict([(k, v) for k, v in all_releases.iteritems()
+    releases = OrderedDict([(k, v) for k, v in all_releases.items()
                             if filter_(k) and (pre or not cre_pre.search(k))])
     if not releases:
         raise KeyError('None of the following releases match the specifiers '
                        '"{}": {}'.format(package_request['version_specifiers'],
-                                         ', '.join(all_releases.keys())))
+                                         ', '.join(list(all_releases.keys()))))
     return package_request['name'], releases
 
 
@@ -279,7 +279,7 @@ def _run_command(*args, **kwargs):
             ostream.write('.')
         lines.append(stdout_i)
     process.wait()
-    print >> ostream, ''
+    print('', file=ostream)
     output = '\n'.join(lines)
     if process.returncode != 0:
         raise RuntimeError(output)

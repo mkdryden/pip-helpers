@@ -1,6 +1,10 @@
+import sys
+import os
+
 from paver.easy import task, needs
 from paver.setuputils import setup
 
+sys.path.insert(0, os.path.dirname(__file__))
 import version
 
 
